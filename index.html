@@ -7,9 +7,57 @@
 </head>
 <body>
     <h1>Upload Files</h1>
-    <form action="https://api.github.com/repos/YOUR_USERNAME/YOUR_REPOSITORY/contents/uploads/FILE_NAME" method="POST" enctype="multipart/form-data">
-        <input type="file" name="file" required>
+    <form id="uploadForm">
+        <input type="file" id="fileInput" name="file" required>
         <button type="submit">Upload</button>
     </form>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+
+            if (!file) return;
+
+            // Dynamically generate a unique file name using the timestamp or file name
+            const fileName = 'uploads/' + new Date().toISOString() + '-' + file.name;
+
+            // Convert the file to base64 encoding (required for GitHub API)
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const fileContent = event.target.result.split(',')[1]; // Get base64 encoded string
+
+                const payload = {
+                    message: 'Upload file: ' + fileName,
+                    content: fileContent
+                };
+
+                // Send the file to GitHub via the API (PUT request to create a file)
+                fetch('https://api.github.com/repos/ShreyashVerma01/Kaus-Isha-Engagement/contents/' + fileName, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': 'token YOUR_GITHUB_TOKEN',
+                        'Accept': 'application/vnd.github.v3+json'
+                    },
+                    body: JSON.stringify(payload)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.content) {
+                        alert('File uploaded successfully!');
+                    } else {
+                        alert('Failed to upload file.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error uploading file:', error);
+                    alert('Error uploading file.');
+                });
+            };
+            reader.readAsDataURL(file); // Read file as base64
+        });
+    </script>
 </body>
 </html>
